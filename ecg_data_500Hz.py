@@ -203,6 +203,12 @@ def waves_shao(data_dir, reduced_lead=True):
     for subdir in subdirectory(data_dir):
         for minibatch in subdirectory(os.path.join(data_dir, subdir)):
             ecg_data = get_ecg_data(os.path.join(data_dir, subdir, minibatch), reduced_lead=reduced_lead)
+            ''' lead shift '''
+            ecg_new = np.zeros((ecg_data.shape[0], 8, 2500))
+            ecg_new[:,:2] = ecg_data[:,:2,:2500]
+            ecg_new[:,2:] = ecg_data[:,2:,2500:]
+            ecg_data = ecg_new
+            ''' normalise lead wise '''
             transform = Normalisation(mode='channel_wise')
             for i in range(len(ecg_data)):
                 ecg_data[i] = transform(ecg_data[i])
@@ -210,8 +216,7 @@ def waves_shao(data_dir, reduced_lead=True):
 
     waves = np.concatenate(waves, axis=0)
     waves = remove_invalid_samples(waves)
-    print('mean shao, ' + str(waves[0].mean()))
-    print('std shao, ' + str(waves[0].std()))
+
     return waves
 
 # def waves_shao(data_dir, reduced_lead=True):
@@ -283,19 +288,25 @@ class Code15Dataset(Dataset):
             wave = wave[[0, 1, 6, 7, 8, 9, 10, 11], :]
         
         if self.downsample:
-            wave = resample(wave, 2500, axis=1)
+            wave = resample(wave, 5000, axis=1)
 
         if self.transform:
             wave = self.transform(wave)
+        ''' we shift leads '''
+        ecg_new = np.zeros((8, 2500))
+        ecg_new[:2] = wave[:2,:2500]
+        ecg_new[2:] = wave[2:,2500:]
+        wave  = ecg_new        
+        '''we normalize the wave '''
         transform = Normalisation(mode="channel_wise")
 
         wave = transform(wave)
-        print('mean, ' + str(wave.mean()))
-        print('std, ' + str(wave.std()))
+
+        
 
         return torch.tensor(wave, dtype=torch.float)
 
-def waves_ptbxl(data_dir, task='multilabel', reduced_lead=True, downsample=True):
+def waves_ptbxl(data_dir, task='multilabel', reduced_lead=True, downsample=False):
     from ptbxl_utils import load_dataset, compute_label_aggregations, select_data
     assert task in ['multilabel', 'multiclass']
 
@@ -310,8 +321,8 @@ def waves_ptbxl(data_dir, task='multilabel', reduced_lead=True, downsample=True)
     data = data.transpose(0,2,1)
     
     if downsample:
-        data = np.array([resample(data[i], 2500, axis=1) for i in range(len(data))])
-        #data = np.array([resample(data[i], 5000, axis=1) for i in range(len(data))])
+        #data = np.array([resample(data[i], 2500, axis=1) for i in range(len(data))])
+        data = np.array([resample(data[i], 5000, axis=1) for i in range(len(data))])
         
 
     if reduced_lead:
@@ -340,12 +351,10 @@ def waves_ptbxl(data_dir, task='multilabel', reduced_lead=True, downsample=True)
     if task == 'multiclass':
         waves_train, labels_train = convert_to_multiclass(waves_train, labels_train)
         waves_test, labels_test = convert_to_multiclass(waves_test, labels_test)
-    print(waves_train.shape)
-    print('mean: ', waves_train[0][0].mean())
     return waves_train, waves_test, labels_train, labels_test
 
 
-def waves_cpsc(data_dir, task='multilabel', reduced_lead=True, downsample=True):
+def waves_cpsc(data_dir, task='multilabel', reduced_lead=True, downsample=False):
     waves_cpsc = []
     labels_cpsc = []
     minibatches = []

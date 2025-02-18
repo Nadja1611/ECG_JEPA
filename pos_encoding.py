@@ -1,5 +1,7 @@
 import numpy as np
 import torch.nn as nn
+import matplotlib.pyplot as plt
+print('script starts here')
 
 def get_2d_sincos_pos_embed(embed_dim, grid_size_h, grid_size_w, cls_token=False):
     """

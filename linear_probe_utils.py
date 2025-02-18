@@ -16,6 +16,9 @@ def precompute_features(encoder, loader, device):
         print('Precomputing features...')
         for wave, label in tqdm(loader):
             bs, _, _  = wave.shape
+            print('shape wave ', wave.shape)
+
+            print('mean wave ',wave[0].mean())
             wave = wave.to(device)
             feature = encoder.representation(wave) # (bs,c*50,384)
             all_features.append(feature.cpu())
@@ -30,6 +33,10 @@ def precompute_features(encoder, loader, device):
 def features_dataloader(encoder, loader, batch_size=32, shuffle=True, device='cpu'):
 
     features, labels = precompute_features(encoder, loader, device=device)
+    '''save features and labels '''
+    torch.save(features, '/gpfs/data/fs72515/nadja_g/ECG_JEPA_Git/ECG_JEPA/features_mvo.pt')
+    torch.save(labels, '/gpfs/data/fs72515/nadja_g/ECG_JEPA_Git/ECG_JEPA/labels_mvo.pt')
+
     dataset = torch.utils.data.TensorDataset(features, labels)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=4)
 

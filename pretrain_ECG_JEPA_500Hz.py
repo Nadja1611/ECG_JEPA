@@ -9,7 +9,7 @@ import time
 from torch.cuda.amp import GradScaler, autocast
 from ecg_jepa import ecg_jepa
 from timm.scheduler import CosineLRScheduler
-from ecg_data import *
+from ecg_data_500Hz import *
 import argparse
 import psutil
 import matplotlib.pyplot as plt
@@ -24,7 +24,7 @@ parser.add_argument('--mask_scale', type=float, nargs=2, default=[0.175, 0.225],
 parser.add_argument('--batch_size', type=int, default=64, help="Batch size")
 parser.add_argument('--lr', type=float, default=5e-5, help="Learning rate")
 parser.add_argument('--mask_type', type=str, default='block', help="Type of masking") # 'block' or 'random'
-parser.add_argument('--epochs', type=int, default=100, help="Number of epochs")
+parser.add_argument('--epochs', type=int, default=200, help="Number of epochs")
 parser.add_argument('--wd', type=float, default=0.05, help="Weight decay")
 parser.add_argument('--data_dir_shao', type=str, default='/mount/ecg/physionet.org/files/ecg-arrhythmia/1.0.0/WFDBRecords/', help="Directory for Shaoxing data")
 parser.add_argument('--data_dir_code15', type=str, default='/mount/ecg/code15', help="Directory for Code15 data")
@@ -64,7 +64,7 @@ start_time = time.time()
 
 # Shaoxing (Ningbo + Chapman)
 waves_shaoxing = waves_shao(data_dir_shao)
-waves_shaoxing = downsample_waves(waves_shaoxing, 2500)
+#waves_shaoxing = downsample_waves(waves_shaoxing, 5000)
 print(f'Shao waves shape: {waves_shaoxing.shape}')
 logging.info(f'Shao waves shape: {waves_shaoxing.shape}')
 
@@ -143,9 +143,9 @@ for epoch in range(epochs):
         scheduler.step(epoch * iterations_per_epoch + minibatch)
         bs, c, t = wave.shape
 
-        if epoch == 0:
+        if epoch == 0 and y<20:
                 plt.plot(wave[0][0])
-                plt.savefig('wave_lead0' + str(y)+'.png')
+                plt.savefig('/gpfs/data/fs72515/nadja_g/ECG_JEPA_Git/ECG_JEPA/waves/wave_lead0_new' + str(y)+'.png')
         wave = wave.to('cuda')
 
 

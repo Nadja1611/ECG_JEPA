@@ -39,7 +39,8 @@ def parse():
     parser.add_argument('--ckpt_dir',
                         default="../weights/multiblock_epoch100.pth",
                         type=str,
-                        metavar='PATH',
+                        metavar='PAmui shop
+                        TH',
                         help='pretrained encoder checkpoint')
     
     parser.add_argument('--output_dir',
